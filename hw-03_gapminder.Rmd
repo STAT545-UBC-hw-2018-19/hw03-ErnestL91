@@ -1,0 +1,314 @@
+---
+title: "hw-03_gapminder"
+output: md_document
+---
+
+## R Markdown
+
+This is the R Markdown document for hw303, which is a continuation of hw02 - further exploring the gapminder dataset. To explore the data this time around, we will be using the [*tidyverse*](https://www.tidyverse.org/packages/) package, which includes the *dplyr* and *ggplot2* package. 
+<br/>
+
+## Open the tidyverse and gapminder Package
+
+```{r tidyverse, warning = FALSE, message = FALSE}
+# install.packages('tidyverse')
+# install.packages('gapminder')
+
+library(tidyverse)
+library(gapminder)
+```
+<br/>
+
+## Task Menu
+
+**The following three topics will be explored in-depth:**
+
+* Maximum and minimum of GDP per capita for all continents.
+* Spread of GDP per capita within the continents.
+* Change in life expectancy over time for different continents.
+
+For each task, data manipulation will be conducted to isolate our analysis (*dplyr*) and visual plots will be provided (*ggplot2*) 
+<br/>
+
+## Maximum and Minimum of GDP per Capita for All Continents.
+
+To create a table summarizing the minimum and maximum GDP per capita values, we will use the *summarize* function to create new columns (*MinGDPpercap* and *MaxGDPpercap* for storing minimum and maximum GDP per capita values), and within this summarize function we will use the *min* and *max* function to obtain the minimum and maximum GDP per capita values from the gapminder dataset. 
+
+```{r, warning = FALSE, message = FALSE}
+# Create table displaying minimum, maximum, range, and max/min relativeness of GDP per capita for each continent
+gapminder %>%
+    select(continent, gdpPercap) %>% # continent and gdpPercap: our variables of interest
+    group_by(continent) %>% # for each continent:
+    summarize(MinGDPpercap = min(gdpPercap), # store min gdpPercap values into this variable
+              MaxGDPpercap = max(gdpPercap), # store max gdpPercap values into this variable
+              Range = MaxGDPpercap - MinGDPpercap, # range: max subtract min gdpPercap values
+              Relative = MaxGDPpercap/MinGDPpercap) %>% # how max compares relatively to min
+knitr::kable(caption = "This table summarizes the minimum and maximum values of GDP per capita for all continents") # display in table with additional formatting
+ 
+# A simpler way to obtain min and max values for gdpPercap, for our own interests   
+tapply(gapminder$gdpPercap, gapminder$continent, range) 
+
+```
+
+From the table we observe above, Africa and Asia are very close in terms of minimum GDP per capita. However, the difference between the minimum to maximum is much larger for Asia - with a difference of ~113191 in GDP per capita compared to the difference between the minimum and maximum seen for the African continent (range ~ 21710). 
+<br/>
+
+The Americas and Europe have similar minimum and maximum values for GDP per capita, as we can see by their minimum, maximum, and range values. Oceania has the highest minimum GDP per capita value by far out of the 5 continents available, however the maximum GDP per capita coming out of this region is the second lowest - only higher than the maximum value in Africa.
+<br/>
+
+When comparing relativeness between the minimum and maximum values in GDP per capita, Asia has the largest by far (*maximum is ~343 times larger than minimum GDP per capita in this region*) - as we would expect after our observations earlier. Africa surprisingly comes second place in this aspect (*maximum is ~91 times larger than minimum GDP per capita in this region*), but this may be due to the fact that the minimum value of GDP per capita for a country in this region is very low, so the country with the largest value in GDP per capita in this continent will be very large relative to it but it does not mean it is large compared to other max values seen from other continents.
+<br/>
+
+Lets look at some plots for visualizing minimum and maximum GDP per capita values for each continent:
+
+```{r, warning = FALSE, message = FALSE}
+# Create a scatter of GDP per capita for each continent
+gapminder %>%
+    group_by(continent) %>%
+    ggplot(aes(continent, gdpPercap)) + 
+    # plot GDP per capita against continent
+    geom_point(aes(color=continent), alpha = 1) + 
+    # create a scatter and color code the points by continent
+    labs(title = "Scatterplot of GDP per Capita by Continent", y = "GDP per capita", 
+         x ="Continent",caption = "Based on data from gapminder", colour = "Continent") + 
+    # label graph
+    theme_bw() # give a white background to the graph
+
+# Create a line plot from min and max values of GDP per capita for each continent
+gapminder %>%
+    group_by(continent) %>%
+    ggplot(aes(continent, gdpPercap)) + 
+    # plot GDP per capita against continent
+    geom_line(aes(color=continent), alpha = 1) +
+    # create a line plot going through all values of GDP per cap for each continent, color         coded by continent
+    labs(title = "Line Plot of GDP per Capita by Continent", y = "GDP per capita", 
+         x ="Continent",caption = "Based on data from gapminder", colour = "Continent") + 
+    # label graph
+    theme_bw() # give a white background to the graph
+                                           
+
+
+```
+<br/>
+
+Overall, the visuals look pretty boring. The scatter shows where the GDP per capita values are generally bunched together, while the line plot shows the "distance" between the minimum and maximum value - basically giving us the range. Visuals for just focussing on minimum and maximum values can be very limited, looking at the distribution of GDP per capita values in each continent and making plots based on this would be more appealing. Hence in the next section of my task list, I will focus on the *spread of GDP per capita within the continents.*
+
+## Spread of GDP per capita within the continents.
+  
+To get things started, lets have a look at the spread of GDP per capita for each continent. In table form, we can look at the quartiles, interquartile range (IQR) and mean. I will also include range, minimum and maximum values in the same table so this table can be treated as an expansion of the min/max table we saw in the previous section.
+
+```{r, warning = FALSE, message = FALSE}
+# Create table to summarize distribution of GDP per capita values by continent
+gapminder %>%
+    select(continent, gdpPercap) %>% # continent and gdpPercap: our variables of interest
+    group_by(continent) %>% # for each continent:
+    summarize(MinGDPpercap = min(gdpPercap), # store min gdpPercap values into this variable
+              Q1 = summary(gdpPercap)[2], # 1st quartile
+              Q2 = summary(gdpPercap)[3], # median
+              Mean= mean(gdpPercap), # mean   
+              Q3 = summary(gdpPercap)[5], # third quartile
+              MaxGDPpercap = max(gdpPercap), # store max gdpPercap values into this variable
+              IQR = summary(gdpPercap)[5] - summary(gdpPercap)[2], # Interquartile range
+              Range = MaxGDPpercap - MinGDPpercap, # range: max subtract min gdpPercap values
+              Relative = MaxGDPpercap/MinGDPpercap) %>% # how max compares relatively to min
+knitr::kable(caption = "This table summarizes the spread of GDP per capita for all continents") # display in table with additional formatting
+```
+
+An interesting observation is that for all continents, the mean is larger than median (Q2). Usually this means the distribution of GDP per capita will be skewed to the right, meaning each continent tends to have more lower values of GDP per capita and lesser counts of high GDP per capita (or even large value outliers). Asia has a large difference between mean (~7902) and median (~2647), hence when we plot the spread for this region, we expect a heavy tail to the right (more likely to have large outliers).
+
+<br/>
+Lets visualize the spread through plots. A boxplot and histogram will be used to display the spread of GDP per capita for each continent. I will display a histogram plot with the spread for all countries to give you a general picture of the spread, before showing spread by continent in a separate histogram and an additional boxplot.
+
+```{r, warning = FALSE, message = FALSE}
+# Histogram of GDP per capita for whole dataset
+ggplot(gapminder, aes(gdpPercap)) + 
+    geom_histogram(aes(fill=continent)) + # Color code counts in the distribution by continent
+    labs(title = "Histogram of GDP per Capita for all Countries", y = "Count", 
+         x ="GDP per capita",caption = "Based on data from gapminder", fill = "Continent") + 
+    # label graph
+    theme_bw() # give a white background to the plot
+
+# Histogram of GDP per capita by continent
+ggplot(gapminder, aes(gdpPercap)) +
+    facet_wrap(~continent) +  # this breaks into histograms showing distribution by continent
+    geom_histogram(aes(fill=continent)) + 
+    labs(title = "Histogram of GDP per Capita by Continent", y = "Count", 
+         x ="GDP per capita",caption = "Based on data from gapminder") + 
+    # label graph
+    theme_bw() # give a white background to the plot
+
+# Boxplot of GDP per capita by continent
+gapminder %>%
+    group_by(continent) %>%
+    ggplot(aes(continent, gdpPercap)) + # interested in comparing GDP per cap by continent
+    geom_boxplot(aes(fill=continent)) + # color code boxplots according to continent
+    labs(title = "Boxplot of GDP per Capita by Continent", y = "GDP per capita", 
+         x ="Continent",caption = "Based on data from gapminder") + 
+    # label graph
+    theme_bw() # give a white background to the plot
+```
+
+As observed in the histogram for all countries, the tail was heavily skewed to the right. This means we are dealing with some large outliers, however there isn't enough of these larger outliers to tell us which continents have countries with these outlier GDP per capita values. The histogram shows Africa have the most countries with low GDP per capita, with the counts in the distribution very close to the left side of the plot. A similar observation is made for Asia, however from previous observations we do expect some large outlier values, which may explain the heavy skew to the right but with low distribution. Europe and Oceania has a consistent spread from low to high GDP per Capita.
+
+<br/>
+The histograms isolating distribution by continent show Asia and Europe having a relative larger spread in the distribution of GDP per capita, whereas Oceania, the Americas, and Africa have a smaller spread. We could shrink each axis of the histogram to have a better view of the spread, however for comparison purposes it is preferred to keep the axis scales the same for all continents.
+
+<br/>
+The boxplots show we have many outlier values (as highlighted by the dots outside of the boxplots). Asia in particular have a few extreme outliers, which explains the heavy right-sided tail in the histograms but with very little counts - hence we cannot observe this in the graphs by our eyes.
+
+<br/>
+A way to have a clearer comparitive observation of the distribution by continent, we can choose to filter out these extreme outlier values from Asia - giving us a smaller axis scale for a more visually appealing plot. This is generally not recommended,  but just for curiosity we can see how the plots look  differently without the extreme values.
+
+```{r, warning = FALSE, message = FALSE} 
+# Filter out extreme GDP per capita values (< 60000 was chosen, cutoff chosen because we lose only 5 extreme data points)
+
+# Boxplot (by continent)
+gapminder %>%
+    filter(gdpPercap < 60000) %>% 
+    # visually inspected boxplots and decided a cut-off < 60000 would be appropriate
+    group_by(continent) %>%
+    ggplot(aes(continent, gdpPercap)) + # variables of interest
+    geom_boxplot(aes(colour=continent)) + # color code boxplots according to continent
+    labs(title = "Boxplot of GDP per Capita by Continent with Extreme Outliers Removed", 
+         y = "GDP per capita", 
+         x ="Continent",caption = "Based on data from gapminder, GDP per capita < 60000") + 
+    # label graph
+    theme_bw() # give a white background to the plot
+
+# Filter gapminder to exclude entries with GDP per capita 60000 or higher
+gmfilter <- subset(gapminder, gdpPercap < 60000) # Lost 5 observations
+
+# Histogram (for all countries)
+ggplot(gmfilter, aes(gdpPercap)) +
+    geom_histogram(aes(fill=continent)) + # color code counts by continent
+    labs(title = "Histogram of GDP per Capita for all Countries, with Extreme Outliers         
+        Removed", y = "Count", x ="GDP per capita", 
+        caption = "Based on gapminder, GDP per capita < 60000") +
+    # label graph
+    theme_bw() # give a white background to the plot
+
+# Histogram (by continent)
+ggplot(gmfilter, aes(gdpPercap)) +
+    facet_wrap(aes(continent)) +  # breaks into histograms showing distribution by continent
+    geom_histogram(aes(fill=continent)) + # color code by continent
+    labs(title = "Histogram of GDP per Capita by Continent, with Extreme Outliers", 
+         y = "Count", x ="GDP per capita",
+         caption = "Based on gapminder, GDP per capita < 60000") + 
+    # label graph
+    theme_bw() # give a white background to the plot
+
+```
+Just by removing 5 extreme outlier points, our plots were much more visually appealing. Reducing the x-axis scale to between 0 to 60000 provided a better outlook of what the spread and distribution is like by continent and for all countries.
+
+## Change in Life Expectancy Over Time
+
+For change in life expectancy over time, I am interested to see how life expectancy change every time point (ie. change every 4 years, compare current timepoint to previous timepoint, etc). 
+
+```{r, warning = FALSE, message = FALSE}
+# add growth variable to orignal dataset, detailing change in lifeExp by every 4 years
+gm_LE.1 <- mutate(gapminder, change = lifeExp - lag(lifeExp)) 
+
+# for entries in 1952, growth = 'NA' - this is our first entry so growth cannot be calculated
+gm_LE.2 <- within(gm_LE.1, change[year == 1952] <- NA)
+
+# Change in mean life expectancy compared to previous 4 year timepoint
+gm_LE.2 %>%
+    select(continent, lifeExp, pop, year, change) %>% # variables of interest
+    group_by(continent, year) %>% # for each continent and year
+    summarize(MeanLE = mean(lifeExp), # Create mean life expectancy for each year, continent
+              MeanChange = mean(change)) %>% # Calculate avg change in life Exp every 4 years                                                 for each continent
+    knitr::kable(caption = "This table summarizes the mean change in life expectancy every 4   
+                 years for each continent") # display in table with additional formatting
+```
+
+For the most part (when comparing life expectancy to the previous 4 year time point), it looks like for all continents (except Oceania) life expectancy has a steady improvement every 4 years before tailing off. There is still improvement in the late 80's for life expectancy, but the rate of improvement is not as much. Oceania is an exception, the rate of improvement in life expectancy was decreasing from 1957 to 1969, before seeing a higher rate of improvement onwards from 1967. The only decrease in life expectancy during the 4 year cycles was Africa in 1997 (-0.03 years) and 2002 (-0.27 years), albeit it was minimal. 
+
+<br/>
+It would also be interesting to see how life expectancy in each subsequent timepoint compares to the one seen in baseline (1952).
+
+```{r, warning = FALSE, message = FALSE}
+# add growth variable to orignal dataset, detailing change in lifeExp compared to baseline
+gm_LE.3  <- gapminder %>%
+                group_by(country) %>%
+                mutate(change = lifeExp - first(lifeExp))
+
+# for entries in 1952, growth = 'NA' - this is our first entry so growth cannot be calculated
+gm_LE.4 <- within(gm_LE.3, change[year == 1952] <- NA)
+
+# Change in mean life expectancy compared to baseline timepoint
+gm_LE.4 %>%
+    select(continent, lifeExp, pop, year, change, country) %>% # variables of interest
+    group_by(continent, year) %>% # for each continent and year
+    summarize(MeanLE = mean(lifeExp), # Create mean life expectancy for each year, continent
+              MeanChange = mean(change)) %>% # Calculate avg change in life Exp every 4 years                                                 for each continent
+    knitr::kable(caption = "This table summarizes the mean change in life expectancy every 4   
+                 years for each continent") # display in table with additional formatting
+```
+
+As seen above, life expectancy is improving at a steady rate. There was not a timepoint where life expectancy was lower than the life expectancy at baseline (1952). This does not mean that it impossible to have a worse life expectancy than baseline, some countries might actually encounter this issue but a majority of the countries will experience improvement in life expectancy every 4 years hence this is more apparent in the average, rather than the rare exceptions where this is not the case.
+
+<br/>
+
+Lets plot the tabular data into a visual format. We will only focus on the data looking at the change in life expectancy compared to the previous 4 year timepoint. First will be a histogram of the spread for change in life expectancy by continent, followed by a line plot showing life expectancy across all timepoints, followed by mean change across time.
+
+```{r, warning = FALSE, message = FALSE}
+# Histogram of change in life expectancy, by continent
+ggplot(gm_LE.2, aes(change)) +
+    facet_wrap(aes(continent)) +  # breaks into histograms showing distribution by continent
+    geom_histogram(aes(fill=continent)) + # color code by continent
+    labs(title = "Histogram of Change in Life Expectancy (in Years) by Continent", 
+         y = "Count", x ="Change in Life Expectancy (in Years)",
+         caption = "Based on gapminder") + # label graph
+    theme_bw() # give a white background to the plot
+
+# Confirm the range in change of life expectancy for all countries
+tapply(gm_LE.2$change, gm_LE.2$continent, summary)
+
+# Line plot for life expectancy across all time points, by continent
+# Create data frame with average life expectancies across all timepoints for each continent
+gm_line1 <- gm_LE.2 %>%
+    select(continent, lifeExp, pop, year, change, country) %>% # variables of interest
+    group_by(continent, year) %>% # for each continent and year
+    summarize(MeanLE = mean(lifeExp), # Create mean life expectancy for each year, continent
+              MeanChange = mean(change)) # Calculate avg change in life Exp every 4 years                                                 for each continent
+    
+gm_line1 %>%
+    group_by(continent) %>%
+    ggplot(aes(year, MeanLE)) + # variables of interest, year and mean life expectancy
+    geom_line(aes(colour=continent), alpha = 1) + # plot through mean life expectancy points
+    geom_point(aes(colour=continent), alpha = 1) + # add mean life expectancy points
+    labs(title = "Line plot for Life Expectancy  (in Years) Across all Timepoints, by          
+                  Continent", 
+         y = "Life Expectancy (in Years)", x ="Year",
+         caption = "Based on gapminder") + # label graph
+    theme_bw() # give a white background to the plot
+
+# Line plot for mean change in life expectancy compared to previous time points, by continent
+gm_line1 %>%
+    group_by(continent) %>%
+    ggplot(aes(year, MeanChange)) + # variables: year and mean change in life expectancy
+    geom_line(aes(colour=continent), alpha = 1) + # plot through mean change in life expectancy
+    geom_point(aes(colour=continent), alpha = 1) + # points for mean change in life expectancy 
+    labs(title = "Line plot for Mean Change in Life Expectancy Every 4 Years Across all   
+                  Timepoints, by Continent", 
+         y = "Mean Change in Life Expectancy (in Years)", x ="Year",
+         caption = "Based on gapminder",
+         colour = "Continent") + # label graph
+    theme_bw() # give a white background to the plot
+
+# Same plot, but split into continents for easier viewing
+gm_line1 %>%
+    group_by(continent) %>%
+    ggplot(aes(year, MeanChange)) + # variables: year and mean change in life expectancy
+    geom_line(aes(colour=continent), alpha = 1) + # plot through mean change in life expectancy
+    geom_point(aes(colour=continent), alpha = 1) + # points for mean change in life expectancy
+    facet_wrap(~continent) + # break line plots into continent
+    labs(title = "Line plot for Mean Change in Life Expectancy Every 4 Years Across all   
+                  Timepoints, by Continent", 
+         y = "Mean Change in Life Expectancy (in Years)", x ="Year",
+         caption = "Based on gapminder",
+         colour = "Continent") + # label graph
+    theme_bw() # give a white background to the plot
+```
+
+As demonstrated by the first histogram, there are countries from some continents that have negative life expectancy compared to the previous 4 year timepoint. As observed by the final line plot, mean change in life expectancy by continent is geegnerally on a downward slope (except Oceania) but not to the point where mean change is negative (exception: Africa in 1997 and 2002). Hence, we continually saw an increase in life expectancy every timepoint. However this change is getting slighter and not increasing as high (as seen by the first line plot - increase is high at beginning but levels off).
