@@ -28,5 +28,8 @@
 [Third plot in Task 3](https://github.com/STAT545-UBC-students/hw03-ErnestL91/blob/master/hw-03_gapminder_files/figure-markdown_strict/unnamed-chunk-8-3.png),
 [Fourth plot in Task 3](https://github.com/STAT545-UBC-students/hw03-ErnestL91/blob/master/hw-03_gapminder_files/figure-markdown_strict/unnamed-chunk-8-4.png)
 
+[.Rmd file](https://github.com/STAT545-UBC-students/hw03-ErnestL91/blob/master/hw-03_gapminder.Rmd)
+
+[.md file](https://github.com/STAT545-UBC-students/hw03-ErnestL91/blob/master/hw-03_gapminder.md)
 
 
